@@ -2,7 +2,7 @@
   "profiles": {
     "JwtAuth": {
       "commandName": "Project",
-      "commandLineArgs": "RS256"
+      "commandLineArgs": "ES256"
     }
   }
 }

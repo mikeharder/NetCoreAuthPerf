@@ -29,6 +29,7 @@ namespace ConsoleApplication
 
             Console.WriteLine($"Duration: {_duration}");
             Console.WriteLine($"Algorithm: {algorithm}");
+            Console.WriteLine($"Key Size: {key.KeySize}");
 
             var handler = new JwtSecurityTokenHandler();
             var token = handler.WriteToken(handler.CreateJwtSecurityToken(new SecurityTokenDescriptor()
@@ -97,13 +98,15 @@ namespace ConsoleApplication
             }
             else if (args.Length == 1 && args[0].Equals(SecurityAlgorithms.RsaSha256, StringComparison.OrdinalIgnoreCase))
             {
-                return Tuple.Create<SecurityKey, string>(new RsaSecurityKey(new RSACryptoServiceProvider(2048)),
-                    SecurityAlgorithms.RsaSha256);
+                var rsa = RSA.Create();
+                rsa.KeySize = 2048;
+                return Tuple.Create<SecurityKey, string>(new RsaSecurityKey(rsa), SecurityAlgorithms.RsaSha256);
             }
             else if (args.Length == 1 && args[0].Equals(SecurityAlgorithms.EcdsaSha256, StringComparison.OrdinalIgnoreCase))
             {
-                return Tuple.Create<SecurityKey, string>(new ECDsaSecurityKey(new ECDsaCng()),
-                    SecurityAlgorithms.EcdsaSha256);
+                var ecdsa = ECDsa.Create();
+                ecdsa.KeySize = 256;
+                return Tuple.Create<SecurityKey, string>(new ECDsaSecurityKey(ecdsa), SecurityAlgorithms.EcdsaSha256);
             }
             else
             {
