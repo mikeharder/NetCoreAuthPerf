@@ -17,6 +17,27 @@ namespace ConsoleApplication
         
         public static void Main(string[] args)
         {
+            SecurityKey key;
+            string algorithm;
+
+            // https://tools.ietf.org/html/rfc7518#section-3
+            if (args.Length == 1 && args[0].Equals(SecurityAlgorithms.HmacSha256, StringComparison.OrdinalIgnoreCase)) {
+                key = new SymmetricSecurityKey(new HMACSHA256().Key);
+                algorithm = SecurityAlgorithms.HmacSha256;
+            }
+            else if (args.Length == 1 && args[0].Equals(SecurityAlgorithms.RsaSha256, StringComparison.OrdinalIgnoreCase)) {
+                key = new RsaSecurityKey(new RSACryptoServiceProvider(2048));
+                algorithm = SecurityAlgorithms.RsaSha256;                
+            }
+            else if (args.Length == 1 && args[0].Equals(SecurityAlgorithms.EcdsaSha256, StringComparison.OrdinalIgnoreCase)) {
+                key = new ECDsaSecurityKey(new ECDsaCng());
+                algorithm = SecurityAlgorithms.EcdsaSha256;                
+            }
+            else {
+                Console.WriteLine($"PlaintextJwtAuth.exe [{SecurityAlgorithms.HmacSha256}|{SecurityAlgorithms.RsaSha256}|{SecurityAlgorithms.EcdsaSha256}]");
+                return;
+            }
+
             new WebHostBuilder()
                 .UseUrls("http://+:5000")
                 .UseKestrel()
@@ -24,8 +45,6 @@ namespace ConsoleApplication
                     services.AddAuthentication();
                 })                
                 .Configure(app => {
-                    var key = new SymmetricSecurityKey(new HMACSHA256().Key);
-
                     app.UseJwtBearerAuthentication(new JwtBearerOptions()
                     {
                         TokenValidationParameters = new TokenValidationParameters()
@@ -51,7 +70,7 @@ namespace ConsoleApplication
                                 Audience = "TestAudience",
                                 Issuer = "TestIssuer",
                                 Subject = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, "TestName") }, JwtBearerDefaults.AuthenticationScheme),
-                                SigningCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
+                                SigningCredentials = new SigningCredentials(key, algorithm)
                             }));
                             
                             var response = "Authorization: Bearer " + token;
