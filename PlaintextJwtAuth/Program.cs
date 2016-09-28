@@ -26,11 +26,15 @@ namespace ConsoleApplication
                 algorithm = SecurityAlgorithms.HmacSha256;
             }
             else if (args.Length == 1 && args[0].Equals(SecurityAlgorithms.RsaSha256, StringComparison.OrdinalIgnoreCase)) {
-                key = new RsaSecurityKey(new RSACryptoServiceProvider(2048));
+                var rsa = RSA.Create();
+                rsa.KeySize = 2048;
+                key = new RsaSecurityKey(rsa);
                 algorithm = SecurityAlgorithms.RsaSha256;                
             }
             else if (args.Length == 1 && args[0].Equals(SecurityAlgorithms.EcdsaSha256, StringComparison.OrdinalIgnoreCase)) {
-                key = new ECDsaSecurityKey(new ECDsaCng(256));
+                var ecdsa = ECDsa.Create();
+                ecdsa.KeySize = 256;
+                key = new ECDsaSecurityKey(ecdsa);
                 algorithm = SecurityAlgorithms.EcdsaSha256;                
             }
             else {
