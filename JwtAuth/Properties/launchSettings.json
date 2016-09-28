@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "JwtAuth": {
+      "commandName": "Project",
+      "commandLineArgs": "RS256"
+    }
+  }
+}
