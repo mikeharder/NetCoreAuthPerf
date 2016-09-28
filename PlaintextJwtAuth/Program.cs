@@ -30,7 +30,7 @@ namespace ConsoleApplication
                 algorithm = SecurityAlgorithms.RsaSha256;                
             }
             else if (args.Length == 1 && args[0].Equals(SecurityAlgorithms.EcdsaSha256, StringComparison.OrdinalIgnoreCase)) {
-                key = new ECDsaSecurityKey(new ECDsaCng());
+                key = new ECDsaSecurityKey(new ECDsaCng(256));
                 algorithm = SecurityAlgorithms.EcdsaSha256;                
             }
             else {
