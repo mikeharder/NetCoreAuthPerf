@@ -26,7 +26,7 @@ namespace JwtCommon
                 };
 
                 RSA rsa;
-                if (args.Length >= 2 && args[1].Equals("newrsa", StringComparison.OrdinalIgnoreCase))
+                if (args.Length >= 2 && args[1].Equals("newcsp", StringComparison.OrdinalIgnoreCase))
                 {
                     rsa = new RSACryptoServiceProvider(2048);
                     keyAndAlgorithm.AlgorithmDescription += " [new RSACryptoServiceProvider()]";
