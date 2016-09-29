@@ -26,10 +26,14 @@ namespace JwtCommon
                 };
 
                 RSA rsa;
-                if (args.Length >= 2 && args[1].Equals("new", StringComparison.OrdinalIgnoreCase))
+                if (args.Length >= 2 && args[1].Equals("newrsa", StringComparison.OrdinalIgnoreCase))
                 {
                     rsa = new RSACryptoServiceProvider(2048);
                     keyAndAlgorithm.AlgorithmDescription += " [new RSACryptoServiceProvider()]";
+                }
+                else if (args.Length >= 2 && args[1].Equals("newcng", StringComparison.OrdinalIgnoreCase)) {
+                    rsa = new RSACng(2048);
+                    keyAndAlgorithm.AlgorithmDescription += " [new RSACng(2048)]";
                 }
                 else
                 {
@@ -49,7 +53,7 @@ namespace JwtCommon
                 };
 
                 ECDsa ecdsa;
-                if (args.Length >= 2 && args[1].Equals("new", StringComparison.OrdinalIgnoreCase))
+                if (args.Length >= 2 && args[1].Equals("newcng", StringComparison.OrdinalIgnoreCase))
                 {
                     ecdsa = new ECDsaCng(256);
                     keyAndAlgorithm.AlgorithmDescription += " [new ECDsaCng()]";
@@ -71,6 +75,6 @@ namespace JwtCommon
         }
 
         public static string HelpString =>
-            $"[{SecurityAlgorithms.HmacSha256}|{SecurityAlgorithms.RsaSha256}|{SecurityAlgorithms.EcdsaSha256}] [create|new]";
+            $"[{SecurityAlgorithms.HmacSha256}|{SecurityAlgorithms.RsaSha256}|{SecurityAlgorithms.EcdsaSha256}] [create|newcsp|newcng]";
     }
 }
