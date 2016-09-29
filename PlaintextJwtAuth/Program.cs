@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using JwtCommon;
 
 namespace ConsoleApplication
 {
@@ -15,32 +16,17 @@ namespace ConsoleApplication
     {
         private static readonly byte[] _helloWorldPayload = Encoding.UTF8.GetBytes("Hello, World!");
         
-        public static void Main(string[] args)
+        public static int Main(string[] args)
         {
-            SecurityKey key;
-            string algorithm;
+            var keyAndAlgorithm = JwtKeyGenerator.GetKeyAndAlgorithm(args);
+            if (keyAndAlgorithm == null)
+            {
+                Console.WriteLine($"PlaintextJwtAuth.exe {JwtKeyGenerator.HelpString}");
+                return 1;
+            }
 
-            // https://tools.ietf.org/html/rfc7518#section-3
-            if (args.Length == 1 && args[0].Equals(SecurityAlgorithms.HmacSha256, StringComparison.OrdinalIgnoreCase)) {
-                key = new SymmetricSecurityKey(new HMACSHA256().Key);
-                algorithm = SecurityAlgorithms.HmacSha256;
-            }
-            else if (args.Length == 1 && args[0].Equals(SecurityAlgorithms.RsaSha256, StringComparison.OrdinalIgnoreCase)) {
-                var rsa = RSA.Create();
-                rsa.KeySize = 2048;
-                key = new RsaSecurityKey(rsa);
-                algorithm = SecurityAlgorithms.RsaSha256;                
-            }
-            else if (args.Length == 1 && args[0].Equals(SecurityAlgorithms.EcdsaSha256, StringComparison.OrdinalIgnoreCase)) {
-                var ecdsa = ECDsa.Create();
-                ecdsa.KeySize = 256;
-                key = new ECDsaSecurityKey(ecdsa);
-                algorithm = SecurityAlgorithms.EcdsaSha256;                
-            }
-            else {
-                Console.WriteLine($"PlaintextJwtAuth.exe [{SecurityAlgorithms.HmacSha256}|{SecurityAlgorithms.RsaSha256}|{SecurityAlgorithms.EcdsaSha256}]");
-                return;
-            }
+            Console.WriteLine($"Algorithm: {keyAndAlgorithm.AlgorithmDescription}");
+            Console.WriteLine($"Key Size: {keyAndAlgorithm.Key.KeySize}");
 
             new WebHostBuilder()
                 .UseUrls("http://+:5000")
@@ -55,7 +41,7 @@ namespace ConsoleApplication
                         {
                             ValidAudience = "TestAudience",
                             ValidIssuer = "TestIssuer",
-                            IssuerSigningKey = key
+                            IssuerSigningKey = keyAndAlgorithm.Key
                         }
                     });
 
@@ -74,7 +60,7 @@ namespace ConsoleApplication
                                 Audience = "TestAudience",
                                 Issuer = "TestIssuer",
                                 Subject = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, "TestName") }, JwtBearerDefaults.AuthenticationScheme),
-                                SigningCredentials = new SigningCredentials(key, algorithm)
+                                SigningCredentials = new SigningCredentials(keyAndAlgorithm.Key, keyAndAlgorithm.Algorithm)
                             }));
                             
                             var response = "Authorization: Bearer " + token;
@@ -87,6 +73,8 @@ namespace ConsoleApplication
                 })
                 .Build()
                 .Run();
+
+            return 0;
         }
     }
 }

@@ -1,11 +1,11 @@
-﻿using System;
+﻿using JwtCommon;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using System.Security.Cryptography;
+using System;
+using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Threading;
-using System.Diagnostics;
 
 namespace ConsoleApplication
 {
@@ -17,19 +17,16 @@ namespace ConsoleApplication
 
         public static int Main(string[] args)
         {
-            var keyAndAlgorithm = GetKeyAndAlgorithm(args);
+            var keyAndAlgorithm = JwtKeyGenerator.GetKeyAndAlgorithm(args);
             if (keyAndAlgorithm == null)
             {
-                Console.WriteLine($"JwtAuth.exe [{SecurityAlgorithms.HmacSha256}|{SecurityAlgorithms.RsaSha256}|{SecurityAlgorithms.EcdsaSha256}]");
+                Console.WriteLine($"JwtAuth.exe {JwtKeyGenerator.HelpString}");
                 return 1;
             }
-
-            var key = keyAndAlgorithm.Item1;
-            var algorithm = keyAndAlgorithm.Item2;
-
+            
             Console.WriteLine($"Duration: {_duration}");
-            Console.WriteLine($"Algorithm: {algorithm}");
-            Console.WriteLine($"Key Size: {key.KeySize}");
+            Console.WriteLine($"Algorithm: {keyAndAlgorithm.AlgorithmDescription}");
+            Console.WriteLine($"Key Size: {keyAndAlgorithm.Key.KeySize}");
 
             var handler = new JwtSecurityTokenHandler();
             var token = handler.WriteToken(handler.CreateJwtSecurityToken(new SecurityTokenDescriptor()
@@ -37,14 +34,14 @@ namespace ConsoleApplication
                 Audience = "TestAudience",
                 Issuer = "TestIssuer",
                 Subject = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, "TestName") }, JwtBearerDefaults.AuthenticationScheme),
-                SigningCredentials = new SigningCredentials(key, algorithm)
+                SigningCredentials = new SigningCredentials(keyAndAlgorithm.Key, keyAndAlgorithm.Algorithm)
             }));
 
             var tokenValidationParameters = new TokenValidationParameters()
             {
                 ValidAudience = "TestAudience",
                 ValidIssuer = "TestIssuer",
-                IssuerSigningKey = key
+                IssuerSigningKey = keyAndAlgorithm.Key
             };
 
             var sw = new Stopwatch();
@@ -88,30 +85,5 @@ namespace ConsoleApplication
             return 0;
         }
 
-        private static Tuple<SecurityKey, string> GetKeyAndAlgorithm(string[] args)
-        {
-            // https://tools.ietf.org/html/rfc7518#section-3
-            if (args.Length == 1 && args[0].Equals(SecurityAlgorithms.HmacSha256, StringComparison.OrdinalIgnoreCase))
-            {
-                return Tuple.Create<SecurityKey, string>(new SymmetricSecurityKey(new HMACSHA256().Key),
-                    SecurityAlgorithms.HmacSha256);
-            }
-            else if (args.Length == 1 && args[0].Equals(SecurityAlgorithms.RsaSha256, StringComparison.OrdinalIgnoreCase))
-            {
-                var rsa = RSA.Create();
-                rsa.KeySize = 2048;
-                return Tuple.Create<SecurityKey, string>(new RsaSecurityKey(rsa), SecurityAlgorithms.RsaSha256);
-            }
-            else if (args.Length == 1 && args[0].Equals(SecurityAlgorithms.EcdsaSha256, StringComparison.OrdinalIgnoreCase))
-            {
-                var ecdsa = ECDsa.Create();
-                ecdsa.KeySize = 256;
-                return Tuple.Create<SecurityKey, string>(new ECDsaSecurityKey(ecdsa), SecurityAlgorithms.EcdsaSha256);
-            }
-            else
-            {
-                return null;
-            }
-        }
     }
 }
