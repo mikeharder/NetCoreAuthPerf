@@ -26,7 +26,7 @@ namespace ConsoleApplication
             }
 
             Console.WriteLine($"Algorithm: {keyAndAlgorithm.AlgorithmDescription}");
-            Console.WriteLine($"Key Size: {keyAndAlgorithm.Key.KeySize}");
+            Console.WriteLine($"Key Size: {keyAndAlgorithm.ValidationKey.KeySize}");
 
             new WebHostBuilder()
                 .UseUrls("http://+:5000")
@@ -41,7 +41,7 @@ namespace ConsoleApplication
                         {
                             ValidAudience = "TestAudience",
                             ValidIssuer = "TestIssuer",
-                            IssuerSigningKey = keyAndAlgorithm.Key
+                            IssuerSigningKey = keyAndAlgorithm.SigningKey
                         }
                     });
 
@@ -60,7 +60,7 @@ namespace ConsoleApplication
                                 Audience = "TestAudience",
                                 Issuer = "TestIssuer",
                                 Subject = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, "TestName") }, JwtBearerDefaults.AuthenticationScheme),
-                                SigningCredentials = new SigningCredentials(keyAndAlgorithm.Key, keyAndAlgorithm.Algorithm)
+                                SigningCredentials = new SigningCredentials(keyAndAlgorithm.ValidationKey, keyAndAlgorithm.Algorithm)
                             }));
                             
                             var response = "Authorization: Bearer " + token;

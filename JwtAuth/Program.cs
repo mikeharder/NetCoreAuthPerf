@@ -26,7 +26,7 @@ namespace ConsoleApplication
             
             Console.WriteLine($"Duration: {_duration}");
             Console.WriteLine($"Algorithm: {keyAndAlgorithm.AlgorithmDescription}");
-            Console.WriteLine($"Key Size: {keyAndAlgorithm.Key.KeySize}");
+            Console.WriteLine($"Key Size: {keyAndAlgorithm.ValidationKey.KeySize}");
 
             var handler = new JwtSecurityTokenHandler();
             var token = handler.WriteToken(handler.CreateJwtSecurityToken(new SecurityTokenDescriptor()
@@ -34,14 +34,14 @@ namespace ConsoleApplication
                 Audience = "TestAudience",
                 Issuer = "TestIssuer",
                 Subject = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, "TestName") }, JwtBearerDefaults.AuthenticationScheme),
-                SigningCredentials = new SigningCredentials(keyAndAlgorithm.Key, keyAndAlgorithm.Algorithm)
+                SigningCredentials = new SigningCredentials(keyAndAlgorithm.SigningKey, keyAndAlgorithm.Algorithm)
             }));
 
             var tokenValidationParameters = new TokenValidationParameters()
             {
                 ValidAudience = "TestAudience",
                 ValidIssuer = "TestIssuer",
-                IssuerSigningKey = keyAndAlgorithm.Key
+                IssuerSigningKey = keyAndAlgorithm.ValidationKey
             };
 
             var sw = new Stopwatch();

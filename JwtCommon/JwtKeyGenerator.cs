@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
+using System.Linq;
 
 namespace JwtCommon
 {
@@ -9,16 +10,18 @@ namespace JwtCommon
         public static KeyAndAlgorithm GetKeyAndAlgorithm(string[] args)
         {
             // https://tools.ietf.org/html/rfc7518#section-3
-            if (args.Length >= 1 && args[0].Equals(SecurityAlgorithms.HmacSha256, StringComparison.OrdinalIgnoreCase))
+            if (args.Contains(SecurityAlgorithms.HmacSha256, StringComparer.OrdinalIgnoreCase))
             {
+                var key = new SymmetricSecurityKey(new HMACSHA256().Key);
                 return new KeyAndAlgorithm()
                 {
-                    Key = new SymmetricSecurityKey(new HMACSHA256().Key),
+                    SigningKey = key,
+                    ValidationKey = key,
                     Algorithm = SecurityAlgorithms.HmacSha256,
                     AlgorithmDescription = SecurityAlgorithms.HmacSha256
                 };
             }
-            else if (args.Length >= 1 && args[0].Equals(SecurityAlgorithms.RsaSha256, StringComparison.OrdinalIgnoreCase))
+            else if (args.Contains(SecurityAlgorithms.RsaSha256, StringComparer.OrdinalIgnoreCase))
             {
                 var keyAndAlgorithm = new KeyAndAlgorithm() {
                     Algorithm = SecurityAlgorithms.RsaSha256,
@@ -26,25 +29,38 @@ namespace JwtCommon
                 };
 
                 RSA rsa;
-                if (args.Length >= 2 && args[1].Equals("newcsp", StringComparison.OrdinalIgnoreCase))
+                if (args.Contains("newcsp", StringComparer.OrdinalIgnoreCase))
                 {
                     rsa = new RSACryptoServiceProvider(2048);
                     keyAndAlgorithm.AlgorithmDescription += " [new RSACryptoServiceProvider()]";
                 }
-                else if (args.Length >= 2 && args[1].Equals("newcng", StringComparison.OrdinalIgnoreCase)) {
+                else if (args.Contains("newcng", StringComparer.OrdinalIgnoreCase)) {
                     rsa = new RSACng(2048);
                     keyAndAlgorithm.AlgorithmDescription += " [new RSACng(2048)]";
                 }
                 else
                 {
-                    rsa = RSA.Create();
+                    rsa = RSA.Create();                   
                     rsa.KeySize = 2048;
-                    keyAndAlgorithm.AlgorithmDescription += " [RSA.Create()]";
+                    keyAndAlgorithm.AlgorithmDescription += " [RSA.Create()";
                 }
-                keyAndAlgorithm.Key = new RsaSecurityKey(rsa);
+
+                keyAndAlgorithm.SigningKey = new RsaSecurityKey(rsa);
+
+                if (args.Contains("params", StringComparer.OrdinalIgnoreCase))
+                {
+                    keyAndAlgorithm.ValidationKey = new RsaSecurityKey(rsa.ExportParameters(includePrivateParameters: false));
+                    keyAndAlgorithm.AlgorithmDescription += ".ExportParameters(includePrivateParameters: false)]";
+                }
+                else
+                {
+                    keyAndAlgorithm.ValidationKey = new RsaSecurityKey(rsa);
+                    keyAndAlgorithm.AlgorithmDescription += "]";
+                }
+
                 return keyAndAlgorithm;
             }
-            else if (args.Length >= 1 && args[0].Equals(SecurityAlgorithms.EcdsaSha256, StringComparison.OrdinalIgnoreCase))
+            else if (args.Contains(SecurityAlgorithms.EcdsaSha256, StringComparer.OrdinalIgnoreCase))
             {
                 var keyAndAlgorithm = new KeyAndAlgorithm()
                 {
@@ -53,7 +69,7 @@ namespace JwtCommon
                 };
 
                 ECDsa ecdsa;
-                if (args.Length >= 2 && args[1].Equals("newcng", StringComparison.OrdinalIgnoreCase))
+                if (args.Contains("newcng", StringComparer.OrdinalIgnoreCase))
                 {
                     ecdsa = new ECDsaCng(256);
                     keyAndAlgorithm.AlgorithmDescription += " [new ECDsaCng()]";
@@ -65,7 +81,9 @@ namespace JwtCommon
                     keyAndAlgorithm.AlgorithmDescription += " [ECDsa.Create()]";
                 }
 
-                keyAndAlgorithm.Key = new ECDsaSecurityKey(ecdsa);
+                var key = new ECDsaSecurityKey(ecdsa);
+                keyAndAlgorithm.SigningKey = key;
+                keyAndAlgorithm.ValidationKey = key;
                 return keyAndAlgorithm;
             }
             else
